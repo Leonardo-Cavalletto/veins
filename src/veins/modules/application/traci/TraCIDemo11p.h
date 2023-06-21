@@ -23,6 +23,8 @@
 #pragma once
 
 #include "veins/modules/application/ieee80211p/DemoBaseApplLayer.h"
+#include <set>
+#include <tuple>
 
 namespace veins {
 
@@ -46,7 +48,9 @@ public:
 
 protected:
     simtime_t lastDroveAt;
-    bool sentMessage;
+    int TTL;
+    bool avoidDuplicates;
+    std::set<std::tuple<LAddress::L2Type, omnetpp::simtime_t>> rcvd_messages;
     int currentSubscribedServiceId;
 
 protected:

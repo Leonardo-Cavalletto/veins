@@ -25,6 +25,9 @@ import org.car2x.veins.modules.application.ieee80211p.DemoBaseApplLayer;
 
 simple TraCIDemo11p extends DemoBaseApplLayer
 {
-    @class(veins::TraCIDemo11p);
-    @display("i=block/app2");
+    parameters:
+    	@class(veins::TraCIDemo11p);
+    	@display("i=block/app2");
+    	bool avoidDuplicates=default(true);
+    	int TTL=default(0); //Prima era 2
 }

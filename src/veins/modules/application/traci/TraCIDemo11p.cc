@@ -25,6 +25,10 @@
 #include "veins/modules/application/traci/TraCIDemo11pMessage_m.h"
 
 using namespace veins;
+using timestamp = omnetpp::simtime_t;
+using macaddress = LAddress::L2Type;
+using tuple = std::tuple<macaddress,timestamp>;
+
 
 Define_Module(veins::TraCIDemo11p);
 
@@ -32,9 +36,11 @@ void TraCIDemo11p::initialize(int stage)
 {
     DemoBaseApplLayer::initialize(stage);
     if (stage == 0) {
-        sentMessage = false;
+
         lastDroveAt = simTime();
         currentSubscribedServiceId = -1;
+        avoidDuplicates = par("avoidDuplicates").boolValue();
+        TTL = par("TTL").intValue();
     }
 }
 
@@ -54,35 +60,51 @@ void TraCIDemo11p::onWSM(BaseFrame1609_4* frame)
 {
     TraCIDemo11pMessage* wsm = check_and_cast<TraCIDemo11pMessage*>(frame);
 
+    EV << getName() << ": receiving MSG <" << wsm->getSenderAddress() << ","
+              << wsm->getTimestamp() << "," << wsm->getTTL() << ">\n";
+
+    // turn GREEN a car as soon as it receives a WSM
+    traciVehicle->setColor(TraCIColor(0, 255, 0, 255));
+
     findHost()->getDisplayString().setTagArg("i", 1, "green");
 
-    if (mobility->getRoadId()[0] != ':') traciVehicle->changeRoute(wsm->getDemoData(), 9999);
-    if (!sentMessage) {
-        sentMessage = true;
-        // repeat the received traffic update once in 2 seconds plus some random delay
-        wsm->setSenderAddress(myId);
-        wsm->setSerial(3);
-        scheduleAt(simTime() + 2 + uniform(0.01, 0.2), wsm->dup());
+
+    if (traciVehicle->getSpeed()>0){
+        traciVehicle->setSpeed(55);
+        traciVehicle->changeLane(0,5000); //CHANGE LANE AFTER ACCIDENT!!!
+
+    }
+    if (avoidDuplicates) {
+            //decide to propagate if not already in the set of received messages
+            tuple key = std::make_tuple(wsm->getSenderAddress(), wsm->getTimestamp());
+            if (std::find(rcvd_messages.begin(), rcvd_messages.end(), key) != rcvd_messages.end()) {
+                //message already in the list, we propagated it already, stop here!
+                EV << "not propagating " << std::get<0>(key) << "," << std::get<1>(key) << "\n";
+                return;
+            } else {
+                EV << "adding " << std::get<0>(key) << "," << std::get<1>(key) << " to rcvd_messages\n";
+                rcvd_messages.insert(key);
+            }
+        }
+
+        //otherwise, decide if to propagate or not according to TTL
+        int currentTTL = wsm->getTTL();
+        if (currentTTL > 0) {
+            wsm->setTTL(currentTTL - 1);
+            scheduleAt(simTime() + 2 + uniform(0.01, 0.2), wsm->dup());
     }
 }
 
 void TraCIDemo11p::handleSelfMsg(cMessage* msg)
 {
     if (TraCIDemo11pMessage* wsm = dynamic_cast<TraCIDemo11pMessage*>(msg)) {
-        // send this message on the service channel until the counter is 3 or higher.
-        // this code only runs when channel switching is enabled
+        std::cout << "Car="<< getParentModule()->getIndex() << " sending <" << wsm->getSenderAddress() << ","
+                << wsm->getTimestamp() << "," << wsm->getTTL() << ">\n";
+
         sendDown(wsm->dup());
-        wsm->setSerial(wsm->getSerial() + 1);
-        if (wsm->getSerial() >= 3) {
-            // stop service advertisements
-            stopService();
-            delete (wsm);
-        }
-        else {
-            scheduleAt(simTime() + 1, wsm);
-        }
+        delete(wsm);
     }
-    else {
+    else{
         DemoBaseApplLayer::handleSelfMsg(msg);
     }
 }
@@ -93,24 +115,19 @@ void TraCIDemo11p::handlePositionUpdate(cObject* obj)
 
     // stopped for for at least 10s?
     if (mobility->getSpeed() < 1) {
-        if (simTime() - lastDroveAt >= 10 && sentMessage == false) {
+        if (simTime() - lastDroveAt >= 2) {
             findHost()->getDisplayString().setTagArg("i", 1, "red");
-            sentMessage = true;
+
 
             TraCIDemo11pMessage* wsm = new TraCIDemo11pMessage();
             populateWSM(wsm);
             wsm->setDemoData(mobility->getRoadId().c_str());
+            wsm->setTimestamp(simTime());
+            wsm->setSenderAddress(myId);
+            wsm->setTTL(TTL);
 
-            // host is standing still due to crash
-            if (dataOnSch) {
-                startService(Channel::sch2, 42, "Traffic Information Service");
-                // started service and server advertising, schedule message to self to send later
-                scheduleAt(computeAsynchronousSendingTime(1, ChannelType::service), wsm);
-            }
-            else {
-                // send right away on CCH, because channel switching is disabled
-                sendDown(wsm);
-            }
+
+            sendDown(wsm);
         }
     }
     else {
