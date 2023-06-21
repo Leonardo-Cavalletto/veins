@@ -23,7 +23,7 @@
 #include <limits>
 #include <iostream>
 #include <sstream>
-
+#include <unistd.h>
 #include "veins/modules/mobility/traci/TraCIMobility.h"
 
 using namespace veins;
@@ -135,13 +135,19 @@ void TraCIMobility::finish()
 void TraCIMobility::handleSelfMsg(cMessage* msg)
 {
     if (msg == startAccidentMsg) {
+        getVehicleCommandInterface()->changeLane(2,5000);
         getVehicleCommandInterface()->setSpeed(0);
+
         simtime_t accidentDuration = par("accidentDuration");
         scheduleAt(simTime() + accidentDuration, stopAccidentMsg);
         accidentCount--;
+
+
+
+
     }
     else if (msg == stopAccidentMsg) {
-        getVehicleCommandInterface()->setSpeed(-1);
+        getVehicleCommandInterface()->setSpeed(-1); //Put a Delete
         if (accidentCount > 0) {
             simtime_t accidentInterval = par("accidentInterval");
             scheduleAt(simTime() + accidentInterval, startAccidentMsg);
