@@ -147,7 +147,9 @@ void TraCIMobility::handleSelfMsg(cMessage* msg)
 
     }
     else if (msg == stopAccidentMsg) {
-        getVehicleCommandInterface()->setSpeed(-1); //Put a Delete
+
+        getVehicleCommandInterface()->setSpeed(-1);
+
         if (accidentCount > 0) {
             simtime_t accidentInterval = par("accidentInterval");
             scheduleAt(simTime() + accidentInterval, startAccidentMsg);

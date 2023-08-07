@@ -21,10 +21,13 @@
 //
 
 #pragma once
-
+//#include "veins/modules/application/traci/TraciDemo11pMessage.msg"
 #include "veins/modules/application/ieee80211p/DemoBaseApplLayer.h"
+
 #include <set>
 #include <tuple>
+#include <string.h>
+#include <unistd.h>
 
 namespace veins {
 
@@ -54,7 +57,7 @@ protected:
     int currentSubscribedServiceId;
 
 protected:
-    void onWSM(BaseFrame1609_4* wsm) override;
+    void onWSM(BaseFrame1609_4* frame) override;
     void onWSA(DemoServiceAdvertisment* wsa) override;
 
     void handleSelfMsg(cMessage* msg) override;

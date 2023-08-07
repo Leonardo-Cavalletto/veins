@@ -25,6 +25,9 @@
 #include "veins/modules/application/traci/TraCIDemo11pMessage_m.h"
 
 using namespace veins;
+using timestamp = omnetpp::simtime_t;
+using macaddress = LAddress::L2Type;
+using tuple = std::tuple<macaddress,timestamp>;
 
 Define_Module(veins::TraCIDemoRSU11p);
 
@@ -40,6 +43,22 @@ void TraCIDemoRSU11p::onWSM(BaseFrame1609_4* frame)
 {
     TraCIDemo11pMessage* wsm = check_and_cast<TraCIDemo11pMessage*>(frame);
 
-    // this rsu repeats the received traffic update in 2 seconds plus some random delay
-    sendDelayedDown(wsm->dup(), 2 + uniform(0.01, 0.2));
+
+    if (avoidDuplicates) {
+        //decide to propagate if not already in the set of received messages
+        tuple key = std::make_tuple(wsm->getSenderAddress(), wsm->getTimestamp());
+        if (std::find(rcvd_messages.begin(), rcvd_messages.end(), key) != rcvd_messages.end()) {
+            //message already in the list, we propagated it already, stop here!
+            EV << "not propagating " << std::get<0>(key) << "," << std::get<1>(key) << "\n";
+            return;
+        } else {
+            EV << "adding " << std::get<0>(key) << "," << std::get<1>(key) << " to rcvd_messages\n";
+            rcvd_messages.insert(key);
+            sendDelayedDown(wsm->dup(),  uniform(0.1, 0.2));
+        }
+    }
+
+
+
+
 }

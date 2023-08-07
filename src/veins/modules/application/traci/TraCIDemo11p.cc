@@ -61,7 +61,7 @@ void TraCIDemo11p::onWSM(BaseFrame1609_4* frame)
     TraCIDemo11pMessage* wsm = check_and_cast<TraCIDemo11pMessage*>(frame);
 
     EV << getName() << ": receiving MSG <" << wsm->getSenderAddress() << ","
-              << wsm->getTimestamp() << "," << wsm->getTTL() << ">\n";
+              << wsm->getTimestamp() << "," << wsm->getTTL()<<">\n";
 
     // turn GREEN a car as soon as it receives a WSM
     traciVehicle->setColor(TraCIColor(0, 255, 0, 255));
@@ -69,19 +69,14 @@ void TraCIDemo11p::onWSM(BaseFrame1609_4* frame)
     findHost()->getDisplayString().setTagArg("i", 1, "green");
 
 
-    if (traciVehicle->getSpeed()>0){
-        traciVehicle->setSpeed(55);
-        traciVehicle->changeLane(0,5000); //CHANGE LANE AFTER ACCIDENT!!!
-
-    }
     if (avoidDuplicates) {
             //decide to propagate if not already in the set of received messages
             tuple key = std::make_tuple(wsm->getSenderAddress(), wsm->getTimestamp());
             if (std::find(rcvd_messages.begin(), rcvd_messages.end(), key) != rcvd_messages.end()) {
-                //message already in the list, we propagated it already, stop here!
+            //message already in the list, we propagated it already, stop here!
                 EV << "not propagating " << std::get<0>(key) << "," << std::get<1>(key) << "\n";
                 return;
-            } else {
+             } else {
                 EV << "adding " << std::get<0>(key) << "," << std::get<1>(key) << " to rcvd_messages\n";
                 rcvd_messages.insert(key);
             }
@@ -92,7 +87,29 @@ void TraCIDemo11p::onWSM(BaseFrame1609_4* frame)
         if (currentTTL > 0) {
             wsm->setTTL(currentTTL - 1);
             scheduleAt(simTime() + 2 + uniform(0.01, 0.2), wsm->dup());
+        }
+
+
+
+    if (traciVehicle->getSpeed() != 0){
+
+
+        traciVehicle->setSpeed(55);
+        traciVehicle->changeLane(0,3);
+        simtime_t endAccident=79;
+        if(simTime()>= endAccident){
+            traciVehicle->setSpeed(-1);
+
+        }
     }
+
+
+
+
+
+
+
+
 }
 
 void TraCIDemo11p::handleSelfMsg(cMessage* msg)

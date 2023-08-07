@@ -23,6 +23,10 @@
 #pragma once
 
 #include "veins/modules/application/ieee80211p/DemoBaseApplLayer.h"
+#include <set>
+#include <tuple>
+#include <string.h>
+
 
 namespace veins {
 
@@ -31,6 +35,10 @@ namespace veins {
  */
 class VEINS_API TraCIDemoRSU11p : public DemoBaseApplLayer {
 protected:
+    int TTL;
+    bool avoidDuplicates;
+    std::set<std::tuple<LAddress::L2Type, omnetpp::simtime_t>> rcvd_messages;
+
     void onWSM(BaseFrame1609_4* wsm) override;
     void onWSA(DemoServiceAdvertisment* wsa) override;
 };

@@ -36,7 +36,7 @@
 -->
 
 <routes>
-   <vType id="vtype0" maxSpeed="95" accel="2" decel="5" length="2.5" minGap="2.5" speedFactor="normc(0.83, 0.1, 0.75, 0.92)" color="1,1,0" lcStrategic="100.0" lcOvertakeRight="1.0" lcSpeedGain="1000" lcKeepRightAcceptanceTime="0.2" lcKeepRight="999999999999" lcAssertive = "100000"/>
+   <vType id="vtype0" maxSpeed="95" accel="18" decel="40" length="2.5" minGap="2.5" speedFactor="normc(0.83, 0.1, 0.75, 0.92)" color="1,1,0" lcStrategic="100.0" lcOvertakeRight="1.0" lcSpeedGain="1000" lcKeepRightAcceptanceTime="0.2" lcKeepRight="999999999999" lcAssertive = "100000"/>
    <route id="route0" edges="edg1 edg2"/>
    <flow id="flow0" type="vtype0" route="route0"  begin="0" departLane="0" period="0" number="7"/>
    <flow id="flow1" type="vtype0" route="route0"  begin="0" departLane="1" period="0" number="7"/>

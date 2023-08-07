@@ -29,6 +29,6 @@ namespace veins;
 packet TraCIDemo11pMessage extends BaseFrame1609_4 {
     string demoData;
     LAddress::L2Type senderAddress = -1;
-    int TTL= 0 //Prima era 4;
+    int TTL= 0; //Prima era 4;
     omnetpp::simtime_t timestamp;
 }
